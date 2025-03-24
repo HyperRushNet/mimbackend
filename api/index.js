@@ -4,7 +4,7 @@ let readSignals = {}; // Houd bij welke berichten per peer door een gebruiker zi
 
 export default async function handler(req, res) {
   // Voeg CORS headers toe om verzoeken van andere domeinen toe te staan
-  res.setHeader('Access-Control-Allow-Origin', '*'); // Dit staat verzoeken van elke domein toe
+  res.setHeader('Access-Control-Allow-Origin', '*'); // Dit staat verzoeken van elk domein toe
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST'); // Sta GET en POST-methoden toe
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type'); // Sta de Content-Type header toe
 
@@ -34,6 +34,15 @@ export default async function handler(req, res) {
 
       console.log(`Signal ontvangen voor ${peerId}: `, signalData);
 
+      // Verwijder berichten na 1 seconde
+      setTimeout(() => {
+        // Verwijder de berichten voor deze peerId na 1 seconde
+        if (signals[peerId]) {
+          signals[peerId] = signals[peerId].filter(msg => msg !== signalData);
+        }
+        console.log(`Berichten voor ${peerId} zijn na 1 seconde verwijderd.`);
+      }, 1000);
+
       res.status(200).json({ message: 'Signal ontvangen', data: signalData });
     } catch (error) {
       res.status(500).json({ error: 'Fout bij het verwerken van signalen' });
@@ -44,7 +53,7 @@ export default async function handler(req, res) {
       const { peerId, userId } = req.query;
 
       if (!peerId || !userId) {
-        return res.status(400).json({ error: '?c= en ?user= zijn vereist' });
+        return res.status(400).json({ error: '?peerId= en ?userId= zijn vereist' });
       }
 
       if (signals[peerId] && signals[peerId].length > 0) {
@@ -76,5 +85,3 @@ export default async function handler(req, res) {
     res.status(405).json({ error: 'Method Not Allowed' });
   }
 }
-
-
