@@ -1,4 +1,3 @@
-// In-memory opslag voor berichten per peer
 let signals = {}; 
 let readSignals = {}; // Houd bij welke berichten per peer door een gebruiker zijn gelezen
 
@@ -18,14 +17,11 @@ export default async function handler(req, res) {
     // Ontvang bericht van een peer
     try {
       const signalData = req.body;
-      let { lobby } = signalData;
+      const { lobby } = signalData;
 
       if (!lobby) {
         return res.status(400).json({ error: 'lobby is vereist' });
       }
-
-      // Voeg prefix toe aan de lobbycode (prefix: mim-glitch-backend-channel-id-)
-      lobby = `mim-glitch-backend-channel-id-${lobby}`;
 
       // Zorg ervoor dat er een array bestaat voor deze lobby
       if (!signals[lobby]) {
@@ -44,14 +40,11 @@ export default async function handler(req, res) {
   } else if (req.method === 'GET') {
     // Haal alle signalen op voor een bepaalde peer die nog niet door de gebruiker zijn gelezen
     try {
-      let { lobby, id } = req.query;
+      const { lobby, id } = req.query;
 
       if (!lobby || !id) {
         return res.status(400).json({ error: '?c= en ?user= zijn vereist' });
       }
-
-      // Voeg prefix toe aan de lobbycode (prefix: mim-glitch-backend-channel-id-)
-      lobby = `mim-glitch-backend-channel-id-${lobby}`;
 
       if (signals[lobby] && signals[lobby].length > 0) {
         // Zorg ervoor dat er een lijst is van gelezen berichten per id
@@ -82,3 +75,4 @@ export default async function handler(req, res) {
     res.status(405).json({ error: 'Method Not Allowed' });
   }
 }
+
