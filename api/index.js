@@ -18,21 +18,21 @@ export default async function handler(req, res) {
     // Ontvang bericht van een peer
     try {
       const signalData = req.body;
-      const { lobby } = signalData;
+      const { peerId } = signalData;
 
-      if (!lobby) {
-        return res.status(400).json({ error: 'lobby is vereist' });
+      if (!peerId) {
+        return res.status(400).json({ error: 'peerId is vereist' });
       }
 
-      // Zorg ervoor dat er een array bestaat voor deze lobby
-      if (!signals[lobby]) {
-        signals[lobby] = [];
+      // Zorg ervoor dat er een array bestaat voor deze peerId
+      if (!signals[peerId]) {
+        signals[peerId] = [];
       }
 
       // Voeg het nieuwe bericht toe aan de lijst
-      signals[lobby].push(signalData);
+      signals[peerId].push(signalData);
 
-      console.log(`Signal ontvangen voor ${lobby}: `, signalData);
+      console.log(`Signal ontvangen voor ${peerId}: `, signalData);
 
       res.status(200).json({ message: 'Signal ontvangen', data: signalData });
     } catch (error) {
@@ -41,29 +41,29 @@ export default async function handler(req, res) {
   } else if (req.method === 'GET') {
     // Haal alle signalen op voor een bepaalde peer die nog niet door de gebruiker zijn gelezen
     try {
-      const { lobby, user } = req.query;
+      const { peerId, userId } = req.query;
 
-      if (!lobby || !user) {
+      if (!peerId || !userId) {
         return res.status(400).json({ error: '?c= en ?user= zijn vereist' });
       }
 
-      if (signals[lobby] && signals[lobby].length > 0) {
-        // Zorg ervoor dat er een lijst is van gelezen berichten per user
-        if (!readSignals[user]) {
-          readSignals[user] = {};
+      if (signals[peerId] && signals[peerId].length > 0) {
+        // Zorg ervoor dat er een lijst is van gelezen berichten per userId
+        if (!readSignals[userId]) {
+          readSignals[userId] = {};
         }
 
-        if (!readSignals[user][lobby]) {
-          readSignals[user][lobby] = new Set();
+        if (!readSignals[userId][peerId]) {
+          readSignals[userId][peerId] = new Set();
         }
 
         // Filter alleen ongelezen berichten voor deze gebruiker
-        const unreadSignals = signals[lobby].filter(
-          (signal) => !readSignals[user][lobby].has(signal)
+        const unreadSignals = signals[peerId].filter(
+          (signal) => !readSignals[userId][peerId].has(signal)
         );
 
         // Markeer deze berichten als gelezen voor deze gebruiker
-        unreadSignals.forEach((signal) => readSignals[user][lobby].add(signal));
+        unreadSignals.forEach((signal) => readSignals[userId][peerId].add(signal));
 
         res.status(200).json({ signals: unreadSignals });
       } else {
