@@ -41,29 +41,29 @@ export default async function handler(req, res) {
   } else if (req.method === 'GET') {
     // Haal alle signalen op voor een bepaalde peer die nog niet door de gebruiker zijn gelezen
     try {
-      const { lobby, id } = req.query;
+      const { lobby, user } = req.query;
 
-      if (!lobby || !id) {
-        return res.status(400).json({ error: '?lobby= en ?user= zijn vereist' });
+      if (!lobby || !user) {
+        return res.status(400).json({ error: '?c= en ?user= zijn vereist' });
       }
 
       if (signals[lobby] && signals[lobby].length > 0) {
-        // Zorg ervoor dat er een lijst is van gelezen berichten per id
-        if (!readSignals[id]) {
-          readSignals[id] = {};
+        // Zorg ervoor dat er een lijst is van gelezen berichten per user
+        if (!readSignals[user]) {
+          readSignals[user] = {};
         }
 
-        if (!readSignals[id][lobby]) {
-          readSignals[id][lobby] = new Set();
+        if (!readSignals[user][lobby]) {
+          readSignals[user][lobby] = new Set();
         }
 
         // Filter alleen ongelezen berichten voor deze gebruiker
         const unreadSignals = signals[lobby].filter(
-          (signal) => !readSignals[id][lobby].has(signal)
+          (signal) => !readSignals[user][lobby].has(signal)
         );
 
         // Markeer deze berichten als gelezen voor deze gebruiker
-        unreadSignals.forEach((signal) => readSignals[id][lobby].add(signal));
+        unreadSignals.forEach((signal) => readSignals[user][lobby].add(signal));
 
         res.status(200).json({ signals: unreadSignals });
       } else {
