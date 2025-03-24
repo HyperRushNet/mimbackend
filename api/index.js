@@ -18,21 +18,24 @@ export default async function handler(req, res) {
     // Ontvang bericht van een peer
     try {
       const signalData = req.body;
-      const { channel } = signalData;
+      let { lobby } = signalData;
 
-      if (!channel) {
-        return res.status(400).json({ error: 'channel is vereist' });
+      if (!lobby) {
+        return res.status(400).json({ error: 'lobby is vereist' });
       }
 
-      // Zorg ervoor dat er een array bestaat voor deze channel
-      if (!signals[channel]) {
-        signals[channel] = [];
+      // Voeg prefix toe aan de lobbycode (prefix: mim-glitch-backend-channel-id-)
+      lobby = `mim-glitch-backend-channel-id-${lobby}`;
+
+      // Zorg ervoor dat er een array bestaat voor deze lobby
+      if (!signals[lobby]) {
+        signals[lobby] = [];
       }
 
       // Voeg het nieuwe bericht toe aan de lijst
-      signals[channel].push(signalData);
+      signals[lobby].push(signalData);
 
-      console.log(`Signal ontvangen voor ${channel}: `, signalData);
+      console.log(`Signal ontvangen voor ${lobby}: `, signalData);
 
       res.status(200).json({ message: 'Signal ontvangen', data: signalData });
     } catch (error) {
@@ -41,29 +44,32 @@ export default async function handler(req, res) {
   } else if (req.method === 'GET') {
     // Haal alle signalen op voor een bepaalde peer die nog niet door de gebruiker zijn gelezen
     try {
-      const { channel, lobby } = req.query;
+      let { lobby, id } = req.query;
 
-      if (!channel || !lobby) {
+      if (!lobby || !id) {
         return res.status(400).json({ error: '?c= en ?user= zijn vereist' });
       }
 
-      if (signals[channel] && signals[channel].length > 0) {
-        // Zorg ervoor dat er een lijst is van gelezen berichten per lobby
-        if (!readSignals[lobby]) {
-          readSignals[lobby] = {};
+      // Voeg prefix toe aan de lobbycode (prefix: mim-glitch-backend-channel-id-)
+      lobby = `mim-glitch-backend-channel-id-${lobby}`;
+
+      if (signals[lobby] && signals[lobby].length > 0) {
+        // Zorg ervoor dat er een lijst is van gelezen berichten per id
+        if (!readSignals[id]) {
+          readSignals[id] = {};
         }
 
-        if (!readSignals[lobby][channel]) {
-          readSignals[lobby][channel] = new Set();
+        if (!readSignals[id][lobby]) {
+          readSignals[id][lobby] = new Set();
         }
 
         // Filter alleen ongelezen berichten voor deze gebruiker
-        const unreadSignals = signals[channel].filter(
-          (signal) => !readSignals[lobby][channel].has(signal)
+        const unreadSignals = signals[lobby].filter(
+          (signal) => !readSignals[id][lobby].has(signal)
         );
 
         // Markeer deze berichten als gelezen voor deze gebruiker
-        unreadSignals.forEach((signal) => readSignals[lobby][channel].add(signal));
+        unreadSignals.forEach((signal) => readSignals[id][lobby].add(signal));
 
         res.status(200).json({ signals: unreadSignals });
       } else {
@@ -76,5 +82,3 @@ export default async function handler(req, res) {
     res.status(405).json({ error: 'Method Not Allowed' });
   }
 }
-
-
