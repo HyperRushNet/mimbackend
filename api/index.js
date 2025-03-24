@@ -1,5 +1,6 @@
 // In-memory opslag voor berichten per peer
 let signals = {}; 
+let readSignals = {}; // Houd bij welke berichten per peer door een gebruiker zijn gelezen
 
 export default async function handler(req, res) {
   // Voeg CORS headers toe om verzoeken van andere domeinen toe te staan
@@ -38,18 +39,33 @@ export default async function handler(req, res) {
       res.status(500).json({ error: 'Fout bij het verwerken van signalen' });
     }
   } else if (req.method === 'GET') {
-    // Haal alle signalen op voor een bepaalde peer
+    // Haal alle signalen op voor een bepaalde peer die nog niet door de gebruiker zijn gelezen
     try {
-      const { peerId } = req.query;
+      const { peerId, userId } = req.query;
 
-      if (!peerId) {
-        return res.status(400).json({ error: 'peerId is vereist' });
+      if (!peerId || !userId) {
+        return res.status(400).json({ error: 'peerId en userId zijn vereist' });
       }
 
       if (signals[peerId] && signals[peerId].length > 0) {
-        res.status(200).json({ signals: signals[peerId] }); // Stuur alle signalen terug
-        // Optioneel: Verwijder de signalen na ophalen als ze slechts eenmalig nodig zijn
-        // delete signals[peerId]; 
+        // Zorg ervoor dat er een lijst is van gelezen berichten per userId
+        if (!readSignals[userId]) {
+          readSignals[userId] = {};
+        }
+
+        if (!readSignals[userId][peerId]) {
+          readSignals[userId][peerId] = new Set();
+        }
+
+        // Filter alleen ongelezen berichten voor deze gebruiker
+        const unreadSignals = signals[peerId].filter(
+          (signal) => !readSignals[userId][peerId].has(signal)
+        );
+
+        // Markeer deze berichten als gelezen voor deze gebruiker
+        unreadSignals.forEach((signal) => readSignals[userId][peerId].add(signal));
+
+        res.status(200).json({ signals: unreadSignals });
       } else {
         res.status(200).json({ message: 'Geen signalen voor deze peer' });
       }
