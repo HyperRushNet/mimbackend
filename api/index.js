@@ -1,3 +1,4 @@
+// In-memory opslag voor berichten per peer
 let signals = {}; 
 let readSignals = {}; // Houd bij welke berichten per peer door een gebruiker zijn gelezen
 
@@ -43,7 +44,7 @@ export default async function handler(req, res) {
       const { lobby, id } = req.query;
 
       if (!lobby || !id) {
-        return res.status(400).json({ error: '?c= en ?user= zijn vereist' });
+        return res.status(400).json({ error: '?lobby= en ?user= zijn vereist' });
       }
 
       if (signals[lobby] && signals[lobby].length > 0) {
@@ -75,4 +76,5 @@ export default async function handler(req, res) {
     res.status(405).json({ error: 'Method Not Allowed' });
   }
 }
+
 
