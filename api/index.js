@@ -28,7 +28,7 @@ export default async function handler(req, res) {
 
       setTimeout(() => {
         signals[peerId] = signals[peerId].filter(msg => msg !== newMessage);
-      }, 500);
+      }, 300);
 
       return res.status(200).json({ message: 'Bericht ontvangen', data: newMessage });
     }
