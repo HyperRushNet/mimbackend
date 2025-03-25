@@ -1,5 +1,5 @@
 let signals = {}; 
-let readSignals = {}; // Houd bij welke berichten per peer door een gebruiker zijn gelezen
+let readSignals = {}; 
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -12,7 +12,16 @@ export default async function handler(req, res) {
 
   try {
     if (req.method === 'POST') {
-      const signalData = req.body;
+      let signalData;
+      
+      // Probeer de body correct te parsen, inclusief emoji-ondersteuning
+      try {
+        const rawBody = await getRawBody(req);
+        signalData = JSON.parse(rawBody.toString('utf-8'));  
+      } catch (err) {
+        return res.status(400).json({ error: 'Ongeldige JSON in verzoek' });
+      }
+
       const { peerId } = signalData;
 
       if (!peerId) {
@@ -23,14 +32,12 @@ export default async function handler(req, res) {
         signals[peerId] = [];
       }
 
-      // Geef elk signaal een unieke ID
       const signalId = Date.now() + Math.random().toString(36).substr(2, 9);
       const newSignal = { id: signalId, ...signalData };
 
       signals[peerId].push(newSignal);
       console.log(`Signal ontvangen voor ${peerId}: `, newSignal);
 
-      // Verwijder het bericht na 3 seconden
       setTimeout(() => {
         if (signals[peerId]) {
           signals[peerId] = signals[peerId].filter(msg => msg.id !== signalId);
@@ -73,4 +80,14 @@ export default async function handler(req, res) {
     console.error('Server error:', error);
     return res.status(500).json({ error: 'Interne serverfout' });
   }
+}
+
+// Helperfunctie om de body als een Buffer te krijgen
+function getRawBody(req) {
+  return new Promise((resolve, reject) => {
+    let chunks = [];
+    req.on('data', (chunk) => chunks.push(chunk));
+    req.on('end', () => resolve(Buffer.concat(chunks)));
+    req.on('error', reject);
+  });
 }
