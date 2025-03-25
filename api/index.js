@@ -41,7 +41,7 @@ export default async function handler(req, res) {
           signals[peerId] = signals[peerId].filter(msg => msg !== signalData);
         }
         console.log(`Berichten voor ${peerId} zijn na 1 seconde verwijderd.`);
-      }, 1000);
+      }, 3000);
 
       res.status(200).json({ message: 'Signal ontvangen', data: signalData });
     } catch (error) {
