@@ -1,7 +1,3 @@
-import getRawBody from "raw-body";
-import { promisify } from "util";
-import { parse } from "querystring";
-
 let signals = {}; 
 let readSignals = {}; 
 
@@ -19,11 +15,10 @@ export default async function handler(req, res) {
       let signalData;
       
       try {
-        // Lees de raw body correct in UTF-8
-        const rawBody = await getRawBody(req, { encoding: "utf-8" });
-        signalData = JSON.parse(rawBody);
+        // Gebruik standaard Next.js JSON-parsing
+        signalData = req.body;
       } catch (err) {
-        console.error("JSON Parsing Error:", err);
+        console.error("❌ JSON Parsing Error:", err);
         return res.status(400).json({ error: 'Ongeldige JSON in verzoek' });
       }
 
