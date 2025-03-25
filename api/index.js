@@ -27,8 +27,8 @@ export default async function handler(req, res) {
       signals[peerId].push(newMessage);
 
       setTimeout(() => {
-        signals[peerId] = signals[peerId].filter(msg => msg !== newMessage);
-      }, 100);
+        signals[peerId] = signals[peerId].slice(1);
+      }, 3000);
 
       return res.status(200).json({ message: 'Bericht ontvangen', data: newMessage });
     }
@@ -39,7 +39,10 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: '?peerId= is vereist' });
       }
 
-      return res.status(200).json({ signals: signals[peerId] || [] });
+      const unreadMessages = signals[peerId] || [];
+      signals[peerId] = [];
+      
+      return res.status(200).json({ signals: unreadMessages });
     }
 
     return res.status(405).json({ error: 'Method Not Allowed' });
