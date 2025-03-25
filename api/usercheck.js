@@ -36,7 +36,7 @@ export default async function handler(req, res) {
           }
         }
         console.log(`Gebruiker ${username} verwijderd van ${peerId}`);
-      }, 3000);
+      }, 5000);
 
       res.status(200).json({ message: 'Gebruikersnaam ontvangen', username });
     } catch (error) {
