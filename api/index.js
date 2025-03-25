@@ -1,3 +1,7 @@
+import getRawBody from "raw-body";
+import { promisify } from "util";
+import { parse } from "querystring";
+
 let signals = {}; 
 let readSignals = {}; 
 
@@ -14,34 +18,36 @@ export default async function handler(req, res) {
     if (req.method === 'POST') {
       let signalData;
       
-      // Probeer de body correct te parsen, inclusief emoji-ondersteuning
       try {
-        const rawBody = await getRawBody(req);
-        signalData = JSON.parse(rawBody.toString('utf-8'));  
+        // Lees de raw body correct in UTF-8
+        const rawBody = await getRawBody(req, { encoding: "utf-8" });
+        signalData = JSON.parse(rawBody);
       } catch (err) {
+        console.error("JSON Parsing Error:", err);
         return res.status(400).json({ error: 'Ongeldige JSON in verzoek' });
       }
 
-      const { peerId } = signalData;
+      const { peerId, message } = signalData;
 
-      if (!peerId) {
-        return res.status(400).json({ error: 'peerId is vereist' });
+      if (!peerId || !message) {
+        return res.status(400).json({ error: 'peerId en message zijn vereist' });
       }
 
       if (!signals[peerId]) {
         signals[peerId] = [];
       }
 
+      // Zorg ervoor dat emoji's correct worden opgeslagen
       const signalId = Date.now() + Math.random().toString(36).substr(2, 9);
-      const newSignal = { id: signalId, ...signalData };
+      const newSignal = { id: signalId, message: message.toString(), ...signalData };
 
       signals[peerId].push(newSignal);
-      console.log(`Signal ontvangen voor ${peerId}: `, newSignal);
+      console.log(`✅ Signal ontvangen voor ${peerId}: `, newSignal);
 
       setTimeout(() => {
         if (signals[peerId]) {
           signals[peerId] = signals[peerId].filter(msg => msg.id !== signalId);
-          console.log(`Bericht ${signalId} voor ${peerId} verwijderd.`);
+          console.log(`⏳ Bericht ${signalId} voor ${peerId} verwijderd.`);
         }
       }, 3000);
 
@@ -77,17 +83,7 @@ export default async function handler(req, res) {
 
     return res.status(405).json({ error: 'Method Not Allowed' });
   } catch (error) {
-    console.error('Server error:', error);
+    console.error('❌ Server error:', error);
     return res.status(500).json({ error: 'Interne serverfout' });
   }
-}
-
-// Helperfunctie om de body als een Buffer te krijgen
-function getRawBody(req) {
-  return new Promise((resolve, reject) => {
-    let chunks = [];
-    req.on('data', (chunk) => chunks.push(chunk));
-    req.on('end', () => resolve(Buffer.concat(chunks)));
-    req.on('error', reject);
-  });
 }
